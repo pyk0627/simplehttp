@@ -1,40 +1,52 @@
+# 导入os模块
 import os
-# 从模板中导入类
+# 从模块中导入类
 from http.server import BaseHTTPRequestHandler,HTTPServer
 
 # 定义一个名为ServerException的类，继承Exception
+# exception 异常
 class ServerException(Exception):
+	# 一个类中，一定要有一条语句
 	# pass 是一个空语句，什么都不做
 	pass
 
-Error_Page="""\
-<html>
-<body>
-<h1>Error accessing {path}</h1>
-<p>{msg}</p>
-</body>
-</html>
-"""
+# 请求处理
 class RequestHandler(BaseHTTPRequestHandler):
-
+	# 定义一个变量
+	Error_Page="""\
+	<html>
+	<body>
+	<h1>Error accessing {path}</h1>
+	<p>{msg}</p>
+	</body>
+	</html>
+	"""
 	def do_GET(self):
 		try:
 			# os.getcwd获取程序当前工作目录，返回一个字符串
 			# self.path,客户端发来的http请求行
+			# 如果浏览器访问的地址：http://127.0.0.1:8080/hello.html
+			# 那么self.path的值：/hello.html
 			full_path = os.getcwd()+self.path
 
+			# os.path.exists()是os.path模块中的函数
+			# 判断当前系统中这个路径存不存在
 			if not os.path.exists(full_path):
 				# raise主动抛出一个异常
 				# ServerException,自定义异常类
 				# 0表示把第0个参数放到这个
 				raise ServerException("'{0}' not found".format(self.path))
+				# os.path.isfile()是python标准库自带的函数
+				# 判断给定的路径是否是一个普通文件	
 			elif os.path.isfile(full_path):
 				self.handle_file(full_path)
 			else:
+				# 如果路径存在但不是一个普通文件则抛出异常
 				raise ServerException("Unknown object '{0}'".format(self.path))
 		except Exception as msg:
 			self.handle_error(msg)
-			
+					# 传入self，通过self也就是”当前这个对象自己“来调用
+					# RequestHandler类里面的实例方法
 	def handle_file(self,full_path):
 		try:
 			# with 保证文件用完后自动关闭，即使读取过程中出错也会关闭
@@ -56,13 +68,18 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 
 	def send_content(self,content,status=200):
+		# isinstance(对象，类型)，用来判断一个对象是不是某种类型
 		if isinstance(content,str):
 			content=content.encode('utf-8')
 		# 发送状态码
+		# 来自BaseHTTPRequestHandler
 		self.send_response(status)
 		# 发送响应头
+		# 来自BaseHTTPRequestHandler
 		self.send_header("Content-type","text/html;charset=utf-8")
+		# 来自BaseHTTPRequestHandler
 		self.send_header("Content-Length",str(len(content)))
+		# 来自BaseHTTPRequestHandler
 		self.end_headers()
 		# 发送内容
 		self.wfile.write(content)		
